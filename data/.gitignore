@@ -1,0 +1,3 @@
+# We dont want to track data in the repository
+*.csv
+

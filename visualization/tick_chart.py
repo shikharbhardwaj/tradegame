@@ -5,17 +5,14 @@ import matplotlib.ticker as mticker
 import matplotlib.dates as mdates
 from matplotlib.finance import candlestick_ohlc
 
-df = pd.read_csv('../preprocessing/AUDJPY-2012-01_features.csv')
+df = pd.read_csv('../preprocessing/AUDJPY-2012-01_features_fast.csv')
 
-df['tick_start'] = pd.to_datetime(df['tick_start'])
-df['date'] = df['tick_start'].apply(mdates.date2num)
-
-cols = ['date', 'open', 'high', 'low', 'close', 'volume']
-df = df[cols]
+df['tick'] = pd.to_datetime(df['tick'])
+df['tick'] = df['tick'].apply(mdates.date2num)
 
 fig = plt.figure()
 ax1 = plt.subplot2grid((1, 1), (0,0))
-ax1.plot(df['date'], df['close'])
+ax1.plot(df['tick'], df['close'])
 
 ax1.xaxis_date()
 ax1.xaxis.set_major_formatter(mdates.DateFormatter('%y-%m-%d'))
