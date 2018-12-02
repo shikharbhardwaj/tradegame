@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 
-import pandas as pd
-import numpy as np
 import sys
+import os
+import pandas as pd
 
 # Take file name from the command line.
-
 if len(sys.argv) < 2:
-    print("No filename.")
-    quit()
+    sys.exit("No filename")
 
-fname = './AUDJPY-2012-01.csv'
+fpath = sys.argv[1]
+output_dir = 'sampled_data' if len(sys.argv) < 3 else sys.argv[2]
 
-data_df = pd.read_csv(fname, header=None)
+data_df = pd.read_csv(fpath, header=None)
 
 # Let the dataframe about the columns of the CSV
 data_df.columns = ['name', 'tick', 'bid', 'ask']
@@ -27,7 +26,7 @@ data_df = data_df.set_index('tick')
 # We resample in this offset.
 # Docs:
 # http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
-sample_offset = '24H'
+sample_offset = '15T'
 
 resampled_data = data_df.resample(sample_offset).first()
 del resampled_data['bid']
@@ -42,6 +41,7 @@ resampled_data['volume'] = data_df.resample(sample_offset).count()['ask']
 resampled_data = resampled_data.dropna()
 
 # Save processed data to disk.
-save_name = fname[0:fname.rfind('.')] + '_daily_fast.csv'
-print("Writing")
-resampled_data.to_csv(save_name)
+base = os.path.basename(fpath)
+save_name = os.path.splitext(base)[0] + '_' + sample_offset + '.csv'
+save_path = os.path.abspath(os.path.join(output_dir, save_name))
+resampled_data.to_csv(save_path)
