@@ -1,18 +1,22 @@
+import sys
+import os
 import pandas as pd
 import math
 import datetime
 
-data = pd.read_csv("/home/tushar/Desktop/Python/Python3/sampled_data/AUDJPY-2012-01_15T.csv")
-for i in range(2,13):
-    if i<10:
-        m = "0" + str(i)
-    else:
-        m = str(i)
-    df = pd.read_csv(("/home/tushar/Desktop/Python/Python3/sampled_data/AUDJPY-2012-") + m +("_15T.csv"))
+if len(sys.argv) < 3:
+    print("Usage python feature_extracter.py [folder_name] [output_name]")
+    quit()
+
+fn = sys.argv[1]
+print(fn)
+
+for f in os.listdir(fn):
+    df = pd.read_csv(fn)
     data = data.append(df)
 
 data = data.reset_index()
-data = data.drop(['index'],axis = 1)
+data = data.drop(['index'], axis = 1)
 
 print("Data Extracted")
 
@@ -88,6 +92,7 @@ for i in range(0,window_size-1):
     l.append(i)
 
 data_fin = data_fin.drop(l)
-data_fin.to_csv('/home/tushar/Desktop/Python/Python3/ipython_notebooks/AUSJPY2012_re1.csv',sep='\t',index=False)
+
+data_fin.to_csv(sys.argv[2],sep=',',index=False)
 
 print("DONE!!")
