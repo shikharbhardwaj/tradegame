@@ -11,8 +11,8 @@ stock_name, window_size, episode_count = sys.argv[1], int(sys.argv[2]), int(sys.
 agent = Agent(window_size)
 
 data = getStockDataVec(stock_name)
-l = data.shape[0] - 1
-batch_size = 400
+l = 200
+batch_size = 128
 state_dim = 22
 
 
@@ -65,14 +65,15 @@ for e in range(episode_count + 1):
                         print("Buy: " + formatPrice(cur_price))
                         prev_portfolio_value = portfolio_value_buy
                         reward = buy_reward
-                        cash -= cur_price
+                        cash -= cur_price * trade_size
                 elif action == 2 and len(agent.inventory) > 0: # sell
                         bought_price = agent.inventory.pop(0)
-                        total_profit += (cur_price - bought_price) * trade_size
+                        cur_profit = (cur_price - bought_price) * trade_size
+                        total_profit += cur_profit
                         print("Sell: " + formatPrice(cur_price) + " | Profit: "
-                              + formatPrice(cur_price - bought_price))
+                              + formatPrice(cur_profit))
                         prev_portfolio_value = portfolio_value_sale
-                        cash += cur_price
+                        cash += cur_price * trade_size
                         reward = sell_reward
 
                 done = True if t == l - 1 else False
@@ -85,7 +86,7 @@ for e in range(episode_count + 1):
                         print("--------------------------------")
                         print("Total Profit: " + formatPrice(total_profit))
                         print("Agent params:")
-                        print("ε :", agent.epsilon)
+                        print("epsilon :", agent.epsilon)
                         print("--------------------------------")
 
                 if len(agent.memory) > batch_size:
