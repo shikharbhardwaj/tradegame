@@ -5,7 +5,7 @@ import matplotlib.ticker as mticker
 import matplotlib.dates as mdates
 from matplotlib.finance import candlestick_ohlc
 
-df = pd.read_csv('../preprocessing/AUDJPY-2012-01_features_fast.csv')
+df = pd.read_csv('../data/EURUSD-2012-01_15T.csv')
 
 df['tick'] = pd.to_datetime(df['tick'])
 df['tick'] = df['tick'].apply(mdates.date2num)
@@ -21,7 +21,7 @@ ax1.grid(True)
     
 plt.xlabel('Date')
 plt.ylabel('Close Price')
-plt.title('AUDJPY-2012-01')
+plt.title('EURUSD-2017-06')
 plt.legend()
 plt.subplots_adjust(left=0.09, bottom=0.20, right=0.94, top=0.90, wspace=0.2, hspace=0)
 plt.show()
