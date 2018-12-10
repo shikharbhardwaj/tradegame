@@ -3,7 +3,7 @@ import math
 
 # prints formatted price
 def formatPrice(n):
-        return ("-$" if n < 0 else "$") + "{0:.2f}".format(abs(n))
+        return ("-$" if n < 0 else "$") + "{0:.7f}".format(abs(n))
 
 # returns the vector containing stock data from a fixed file
 def getStockDataVec(key):
