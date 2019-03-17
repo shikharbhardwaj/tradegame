@@ -1,5 +1,4 @@
 import numpy as np
-import math
 
 # prints formatted price
 def formatPrice(n):
