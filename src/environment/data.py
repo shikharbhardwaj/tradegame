@@ -8,7 +8,7 @@ from os import path
 import numpy as np
 
 class BatchIterator:
-    def __init__(self, location, currencyPairs, beginYear, endYear, period = 96, preprocess = True):
+    def __init__(self, location, currencyPairs, beginYear, endYear, preprocess = True, period = 96):
         """Initialize the batch generator
 
         Arguments:
@@ -38,9 +38,6 @@ class BatchIterator:
         """
         if self.offset + self.begin_year == self.end_year:
             raise StopIteration
-
-        # Move to the next year.
-        self.offset += 1
 
         year = str(self.offset + self.begin_year)
         months = [str(x).zfill(2) for x in range(1,13)]
@@ -77,6 +74,9 @@ class BatchIterator:
 
         # Remove all rows with a null value.
         batch.dropna(inplace=True)
+
+        # Move to the next year.
+        self.offset += 1
 
         # Return the current batch if no preprocessing is needed.
         if self.preprocess == False:
