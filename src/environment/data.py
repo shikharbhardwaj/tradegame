@@ -5,9 +5,10 @@ imputation, normalization and subsetting.
 
 import pandas as pd
 from os import path
+import numpy as np
 
 class BatchIterator:
-    def __init__(self, location, currencyPairs, beginYear, endYear):
+    def __init__(self, location, currencyPairs, beginYear, endYear, period = 96, preprocess = True):
         """Initialize the batch generator
 
         Arguments:
@@ -15,12 +16,16 @@ class BatchIterator:
             currencyPairs {list} -- List of strings with the pair names
             beginYear {int} -- beginning of the dataset
             endYear {int} -- past the ending year of the dataset
+            period {int} -- Period for rolling window normalization
+            preprocess {bool} -- Preprocess tick data or not
         """
         self.location = location
         self.currency_pairs = currencyPairs
         self.begin_year = beginYear
         self.end_year = endYear
+        self.period = period
         self.offset = 0
+        self.preprocess = preprocess
 
     def __iter__(self):
         return self
@@ -33,6 +38,9 @@ class BatchIterator:
         """
         if self.offset + self.begin_year == self.end_year:
             raise StopIteration
+
+        # Move to the next year.
+        self.offset += 1
 
         year = str(self.offset + self.begin_year)
         months = [str(x).zfill(2) for x in range(1,13)]
@@ -57,6 +65,10 @@ class BatchIterator:
             cdf = pd.concat(current_dfs, axis = 0)
             # Remove duplicated ticks.
             cdf.drop_duplicates(subset='tick', inplace=True)
+
+            # The tick should be a datetime.
+            cdf['tick'] = pd.to_datetime(cdf['tick'])
+
             cdf.set_index('tick', inplace=True)
             dataframes.append(cdf)
 
@@ -64,10 +76,26 @@ class BatchIterator:
         batch = pd.concat(dataframes, axis = 1)
 
         # Remove all rows with a null value.
-        batch.dropna(axis=0, inplace=True)
+        batch.dropna(inplace=True)
 
-        # Move to the next year.
-        self.offset += 1
+        # Return the current batch if no preprocessing is needed.
+        if self.preprocess == False:
+            return batch
+
+        # Compute log returns and differences.
+        batch = batch.apply(np.log)
+        batch = batch.diff()
+        batch.dropna(inplace=True)
+
+        # Z-score normalization along each column, with given period
+        means = batch.rolling(window=self.period).mean()
+        stds = batch.rolling(window=self.period).std()
+
+        batch -= means
+        batch /= stds
+
+        # Remove invalid rows.
+        batch.dropna(inplace=True)
+
         return batch
-
 
