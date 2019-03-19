@@ -97,6 +97,44 @@ class Environment:
 
         return reward
 
+    def executeAugment(self, action):
+        """Execute the specified action and generate reward for all possible
+        actions at the current tick.
+
+        Arguments:
+            action {int} -- Action index - 0 (hold), 1 (buy), 2 (sell)
+        Returns:
+            [(float, float, float)] -- A tuple of rewards for each action.
+        """
+        tick = self.current_tick[0]
+        prev_portfolio_value = self.portfolio.value(tick)
+
+        # Move to the next state.
+        self.next(action)
+
+        value_hold = self.portfolio.value(self.current_tick[0])
+        self.portfolio.buy(tick)
+        value_buy = self.portfolio.value(self.current_tick[0])
+        # Revert the buy action.
+        self.portfolio.sell(tick)
+        self.portfolio.sell(tick)
+        value_sell = self.portfolio.value(self.current_tick[0])
+        # Revert the sell action.
+        self.portfolio.buy(tick)
+
+        # Execute the specified action
+        if action == 1:
+            self.portfolio.buy(tick)
+        elif action == 2:
+            self.portfolio.sell(tick)
+
+        hold_reward = np.log(value_hold / prev_portfolio_value)
+        buy_reward = np.log(value_buy / prev_portfolio_value)
+        sell_reward = np.log(value_sell / prev_portfolio_value)
+
+        return (hold_reward, buy_reward, sell_reward)
+
+
     def state(self):
         """Get the current state of the environment
 
@@ -110,11 +148,13 @@ class Environment:
         return np.concatenate((time_state, action_state, self.market_state))
 
     def __str__(self):
-        string_rep = "Trading environment\n"
+        string_rep  = "======================\n"
+        string_rep += " Trading environment\n"
+        string_rep += "======================\n"
         string_rep += "Last action: " + str(self.last_action) + "\n"
         string_rep += "Current tick: " + str(self.current_tick[0]) + "\n"
         string_rep += "Portfolio value: " + str(self.portfolio.value(self.current_tick[0])) + "\n"
-        string_rep += str(self.portfolio) + "\n"
+        string_rep += str(self.portfolio)
 
         return string_rep
 

@@ -1,100 +1,90 @@
-from agent.agent import Agent
-from functions import *
+"""Train the model with data from specified years.
+"""
+
+import json
 import sys
+import numpy as np
 
-if len(sys.argv) != 3:
-    print("Usage: python train.py [stock] [episodes]")
-    exit()
+from environment.data import BatchIterator
+from environment.portfolio import Portfolio
+from environment.environment import Environment
+from agent.agent import Agent
 
-stock_name, episode_count = sys.argv[1], int(sys.argv[2])
+# if len(sys.argv) != 2:
+#     print("Usage: python train.py [config]")
+#     exit(0)
 
-l = 1000
-batch_size = 96
-state_dim = 22
+config_file = sys.argv[1] if len(sys.argv) == 2 else "/home/shikhar/dev/tradegame_new/src/sample.json"
 
-agent = Agent(state_dim, batch_size)
+config = json.load(open(config_file))
 
-data = getStockDataVec(stock_name)
+# Unpack config
+location = config['data_location']
+pairs = config['pairs']
+begin_year = config['begin_year']
+end_year = config['end_year']
+trade_pair = config['trade_pair']
+start_cash = config['start_cash']
+trade_size = config['trade_size']
 
-for e in range(episode_count + 1):
-    print("Episode " + str(e) + "/" + str(episode_count))
+# Data iterators
+state_iter = BatchIterator(location, pairs, begin_year, end_year)
+price_iter = BatchIterator(location, [trade_pair], begin_year, end_year, False)
 
-    # Get inital state
-    action = 0
-    state = getState(data, 0, action)
+# Set up the environment
+portfolio = Portfolio(start_cash, trade_size, price_iter)
+env = Environment(pairs, state_iter, portfolio)
 
-    cash = 10000
-    trade_size = 100
-    prev_portfolio_value = cash
-    total_profit = 0
-    agent.inventory = []
+state_shape = env.state().shape
 
-    for t in range(l):
-        prev_price = state[0]
-        action = agent.act(state)
+# Initialize the agent
+agent = Agent(state_shape[0])
 
-        # Get next state.
-        next_state = getState(data, t+1, action)
-        cur_price = next_state[0]
+# Go through the ticks and learn
+num_steps = 1
 
-        # Reward if we sell
-        portfolio_value_sale = cash + len(agent.inventory) * cur_price * trade_size
+while True:
+    cur_state = env.state()
+    action = agent.act(cur_state)
 
-        # if agent.inventory != []:
-        #     portfolio_value_sale += trade_size * (cur_price - agent.inventory[0])
+    # Get rewards for all possible actions.
+    try:
+        rewards = env.executeAugment(action)
+    except StopIteration:
+        print("Training ended after processing", num_steps, "ticks")
+        break
 
-        sell_reward = np.log(portfolio_value_sale / prev_portfolio_value)
+    # Get the next state.
+    next_state = env.state()
 
-        # Reward if we buy
-        portfolio_value_buy = (cash - cur_price*trade_size) + (len(agent.inventory) + 1) * cur_price * trade_size
-        buy_reward = np.log(portfolio_value_buy / prev_portfolio_value)
+    # Append the possible actions to replay memory
+    next_state[4:7] = np.zeros(3)
+    hold_state = np.copy(next_state)
+    hold_state[4] = 1
+    agent.memory.append((cur_state, 0, rewards[0], hold_state))
+    buy_state = np.copy(next_state)
+    buy_state[5] = 1
+    agent.memory.append((cur_state, 1, rewards[1], buy_state))
+    sell_state = np.copy(next_state)
+    sell_state[6] = 1
+    agent.memory.append((cur_state, 2, rewards[2], sell_state))
 
-        # Reward if we hold
-        portfolio_value_hold = cash + len(agent.inventory) * cur_price * trade_size
-        hold_reward = np.log(portfolio_value_hold / prev_portfolio_value)
+    if num_steps % 96 == 0 and len(agent.memory) == 480:
+        agent.expReplay()
 
-        prev_portfolio_value = portfolio_value_hold
+    agent.targetUpdate()
 
-        buy_flag = True
-        if action == 1 and cash >= cur_price*trade_size: # buy
-            agent.inventory.append(cur_price)
-            print("Buy: " + formatPrice(cur_price))
-            prev_portfolio_value = portfolio_value_buy
-            cash -= cur_price * trade_size
-        elif action == 1 and cash < cur_price*trade_size:
-            buy_flag = False
-        elif action == 2 and len(agent.inventory) > 0: # sell
-            bought_price = agent.inventory.pop(0)
-            # cur_profit = (cur_price - bought_price) * trade_size
-            # total_profit += cur_profit
-            # print("Sell: " + formatPrice(cur_price) + " | Profit: " 
-            #     + formatPrice(cur_profit))
-            print("Sell: " + formatPrice(cur_price))
-            prev_portfolio_value = portfolio_value_sale
-            cash += cur_price * trade_size
+    if num_steps % 1000 == 0:
+        print("Model checkpoint (", num_steps, ") ", sep="", end="")
+        try:
+            agent.model.save("models/flat_state_exp/model_" + str(num_steps))
+            print("✓")
+        except NotImplementedError:
+            print("❌")
+        print(str(env))
+        print(str(agent))
+        print()
 
-        done = True if t == l - 1 else False
-        agent.memory.append((state, 0, hold_reward, next_state, done))
-        if buy_flag:
-            agent.memory.append((state, 1, buy_reward, next_state, done))
-        agent.memory.append((state, 2, sell_reward, next_state, done))
-        state = next_state
+    num_steps += 1
 
-        if done:
-            print("--------------------------------")
-            total_log_profit = np.log(prev_portfolio_value/cash)
-            total_profit = prev_portfolio_value - cash
-            print("Total Log Profit: " + formatPrice(total_log_profit))
-            print("Total Profit: " + formatPrice(total_profit))
-            print("Agent params:")
-            print("epsilon :", agent.epsilon)
-            print("--------------------------------")
 
-        if len(agent.memory) > batch_size:
-            agent.expReplay()
-
-        agent.targetUpdate()
-
-    if e % 10 == 0:
-            print('Saving model...\n')
-            agent.model.save("models/lstm/model_ep" + str(e))

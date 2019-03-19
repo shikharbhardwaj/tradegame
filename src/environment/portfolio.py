@@ -92,9 +92,11 @@ class Portfolio:
         return True
 
     def __str__(self):
-        string_rep = "Portfolio\n"
+        string_rep  = "======================\n"
+        string_rep += "       Portfolio\n"
+        string_rep += "======================\n"
         string_rep += "Cash: " + str(self.cash) + "\n"
-        string_rep += "Secondary: " + str(self.secondary) + "\n"
+        string_rep += "Secondary: " + str(self.secondary)
 
         return string_rep
 
