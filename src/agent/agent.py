@@ -9,15 +9,15 @@ import numpy as np
 from collections import deque
 
 class Agent:
-    def __init__(self, state_dim=22, batch_size=96, is_eval=False, model_name=""):
+    def __init__(self, state_dim=22, memory_size=480, is_eval=False, model_name=""):
         self.action_size = 3			# sit, buy, sell
-        self.memory = deque(maxlen=480)
-        self.inventory = []
+        self.memory = deque(maxlen=memory_size)
         self.model_name = model_name
         self.is_eval = is_eval
         self.state_dim = state_dim
-        self.batch_size = batch_size
 
+        # DRQN Hyperparameters
+        self.sample_size = 96
         self.gamma = 0.99
         self.epsilon = 1.0
         self.epsilon_min = 0.01
@@ -30,7 +30,7 @@ class Agent:
 
     def _model(self):
         model = Sequential()
-        model.add(TimeDistributed(Dense(units=32, input_dim=(1, self.state_dim), kernel_initializer='he_normal')))
+        model.add(TimeDistributed(Dense(units=32, input_dim=(self.state_dim), kernel_initializer='he_normal')))
         model.add(ELU())
         model.add(TimeDistributed(Dense(units=32, kernel_initializer='he_normal')))
         model.add(ELU())
@@ -50,21 +50,20 @@ class Agent:
         return np.argmax(options)
 
     def sampleMemory(self):
-        idx = np.random.permutation(len(self.memory))[:self.batch_size]
-        cols = [[], [], [], [], []] 	# state, action, reward, next_state, done 
+        idx = np.random.permutation(len(self.memory))[:self.sample_size]
+        cols = [[], [], [], []] 	# state, action, reward, next_state
         for i in idx:
             memory = self.memory[i]
             for col, value in zip(cols, memory):
                 col.append(value)
 
         cols = [np.array(col) for col in cols]
-        # print(cols[0].shape)
-        return (cols[0], cols[1], cols[2], cols[3], cols[4])
+        return (cols[0], cols[1], cols[2], cols[3])
 
 
     def expReplay(self):
-        states, actions, rewards, next_states, dones = self.sampleMemory()
-       	
+        states, actions, rewards, next_states = self.sampleMemory()
+
         # Predict actions from the online model
         states = np.expand_dims(states, axis=1)
         next_states = np.expand_dims(next_states, axis=1)
@@ -75,17 +74,17 @@ class Agent:
         # Get Q Values from the target network
         target_q = self.target_model.predict(next_states)
         # print(np.dot(target_q.T,target_q))
-        
+
         # Action augmentation
-        target_q[np.arange(self.batch_size), actions].dot(self.gamma)
-        target_q[np.arange(self.batch_size), actions] += rewards
-        
+        target_q[np.arange(self.sample_size), actions].dot(self.gamma)
+        target_q[np.arange(self.sample_size), actions] += rewards
+
         # Fit the model
         # print(target_q.shape)
-        self.model.fit(states, target_q, epochs=1, verbose=0, batch_size=self.batch_size)
+        self.model.fit(states, target_q, epochs=1, verbose=0)
 
         if self.epsilon > self.epsilon_min:
-            self.epsilon *= self.epsilon_decay 
+            self.epsilon *= self.epsilon_decay
 
     def targetUpdate(self):
         # Transfer learned weights from the online model to the fixed target
@@ -96,3 +95,11 @@ class Agent:
             target_weights[i] = weights[i] * self.tau + target_weights[i] * (1 - self.tau)
 
         self.target_model.set_weights(target_weights)
+
+    def __str__(self):
+        string_rep  = "======================\n"
+        string_rep += "        Agent\n"
+        string_rep += "======================\n"
+        string_rep += "Epsilon: " + str(self.epsilon)
+
+        return string_rep
