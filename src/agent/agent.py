@@ -9,10 +9,10 @@ import numpy as np
 from collections import deque
 
 class Agent:
-    def __init__(self, state_dim=22, memory_size=480, is_eval=False, model_name=""):
+    def __init__(self, state_dim=22, memory_size=480, is_eval=False, model_location=""):
         self.action_size = 3			# sit, buy, sell
         self.memory = deque(maxlen=memory_size)
-        self.model_name = model_name
+        self.model_name = model_location
         self.is_eval = is_eval
         self.state_dim = state_dim
 
@@ -25,8 +25,13 @@ class Agent:
         self.tau = 0.001
         self.learning_rate = 0.00025
 
-        self.model = load_model("models/" + model_name) if is_eval else self._model()
+        self.model = load_model(model_location) if is_eval else self._model()
         self.target_model = self._model()
+
+        # Minor exploration during evaluation for to prevent overfitting.
+        # Ref: https://stats.stackexchange.com/questions/270618/why-does-q-learning-use-epsilon-greedy-during-testing?rq=1
+        if is_eval:
+            self.epsilon = self.epsilon_min
 
     def _model(self):
         model = Sequential()

@@ -75,7 +75,7 @@ while True:
     agent.targetUpdate()
 
     if num_steps % 1000 == 0:
-        print("Model checkpoint (", num_steps, ") ", sep="", end="")
+        print("Training checkpoint (", num_steps, ") ", sep="", end="")
         try:
             agent.model.save("models/flat_state_exp/model_" + str(num_steps))
             print("✓")
