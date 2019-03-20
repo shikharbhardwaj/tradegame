@@ -1,5 +1,4 @@
 import numpy as np
-import math
 
 # prints formatted price
 def formatPrice(n):
@@ -16,14 +15,11 @@ def sigmoid(x):
         return 1 / (1 + np.exp(-x))
 
 # returns an an n-day state representation ending at time t
-def getState(data, t, n, action, prev_state):
-        next_state = np.zeros((prev_state.shape))
-        d = t - n + 1
-        block = None
-        next_state[0:n-1] = prev_state[1:]
+def getState(data, t, action):
+        next_state = data[t]
+        # next_state[0:n-1] = prev_state[1:]
         # Append action 1-hot encoding
         action_one_hot = np.zeros(3)
         action_one_hot[action] = 1
-        next_state[-1] = np.concatenate([data[t], action_one_hot])
+        next_state = np.concatenate([next_state, action_one_hot])
         return next_state
-

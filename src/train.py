@@ -1,98 +1,90 @@
-from agent.agent import Agent
-from functions import *
+"""Train the model with data from specified years.
+"""
+
+import json
 import sys
+import numpy as np
 
-if len(sys.argv) != 4:
-        print("Usage: python train.py [stock] [window] [episodes]")
-        exit()
+from environment.data import BatchIterator
+from environment.portfolio import Portfolio
+from environment.environment import Environment
+from agent.agent import Agent
 
-stock_name, window_size, episode_count = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
+# if len(sys.argv) != 2:
+#     print("Usage: python train.py [config]")
+#     exit(0)
 
-agent = Agent(window_size)
+config_file = sys.argv[1] if len(sys.argv) == 2 else "/home/shikhar/dev/tradegame_new/src/sample.json"
 
-data = getStockDataVec(stock_name)
-l = 200
-batch_size = 128
-state_dim = 22
+config = json.load(open(config_file))
+
+# Unpack config
+location = config['data_location']
+pairs = config['pairs']
+begin_year = config['begin_year']
+end_year = config['end_year']
+trade_pair = config['trade_pair']
+start_cash = config['start_cash']
+trade_size = config['trade_size']
+
+# Data iterators
+state_iter = BatchIterator(location, pairs, begin_year, end_year)
+price_iter = BatchIterator(location, [trade_pair], begin_year, end_year, False)
+
+# Set up the environment
+portfolio = Portfolio(start_cash, trade_size, price_iter)
+env = Environment(pairs, state_iter, portfolio)
+
+state_shape = env.state().shape
+
+# Initialize the agent
+agent = Agent(state_shape[0])
+
+# Go through the ticks and learn
+num_steps = 1
+
+while True:
+    cur_state = env.state()
+    action = agent.act(cur_state)
+
+    # Get rewards for all possible actions.
+    try:
+        rewards = env.executeAugment(action)
+    except StopIteration:
+        print("Training ended after processing", num_steps, "ticks")
+        break
+
+    # Get the next state.
+    next_state = env.state()
+
+    # Append the possible actions to replay memory
+    next_state[4:7] = np.zeros(3)
+    hold_state = np.copy(next_state)
+    hold_state[4] = 1
+    agent.memory.append((cur_state, 0, rewards[0], hold_state))
+    buy_state = np.copy(next_state)
+    buy_state[5] = 1
+    agent.memory.append((cur_state, 1, rewards[1], buy_state))
+    sell_state = np.copy(next_state)
+    sell_state[6] = 1
+    agent.memory.append((cur_state, 2, rewards[2], sell_state))
+
+    if num_steps % 96 == 0 and len(agent.memory) == 480:
+        agent.expReplay()
+
+    agent.targetUpdate()
+
+    if num_steps % 1000 == 0:
+        print("Training checkpoint (", num_steps, ") ", sep="", end="")
+        try:
+            agent.model.save("models/flat_state_exp/model_" + str(num_steps))
+            print("✓")
+        except NotImplementedError:
+            print("❌")
+        print(str(env))
+        print(str(agent))
+        print()
+
+    num_steps += 1
 
 
-for e in range(episode_count + 1):
-        print("Episode " + str(e) + "/" + str(episode_count))
-
-        # Get inital state
-        action = 0
-        initial_state = np.zeros((window_size + 1, state_dim))
-        initial_state[:, 0:(state_dim - 3)] = data[0:window_size + 1]
-        state = getState(data, 0, window_size + 1, action, initial_state)
-
-        cash = 10000
-        trade_size = 1000
-        prev_portfolio_value = cash
-        total_profit = 0
-        agent.inventory = []
-
-        for t in range(window_size, l):
-                prev_price = state[-1][0]
-                action = agent.act(state)
-
-                # Get next state.
-                next_state = getState(data, t + 1, window_size + 1, action, state)
-                cur_price = next_state[-1][0]
-                reward = 0
-
-                # The reward is
-                # If we sell,
-                portfolio_value_sale = cash + len(agent.inventory) * cur_price
-
-                if agent.inventory != []:
-                    portfolio_value_sale += trade_size * (cur_price - agent.inventory[0])
-
-                sell_reward = np.log(portfolio_value_sale / prev_portfolio_value)
-
-                # If we buy,
-                portfolio_value_buy = cash + len(agent.inventory) * cur_price
-                buy_reward = np.log(portfolio_value_buy / prev_portfolio_value)
-
-                # If we hold,
-                portfolio_value_hold = cash + len(agent.inventory) * cur_price
-                hold_reward = np.log(portfolio_value_hold / prev_portfolio_value)
-
-                prev_portfolio_value = portfolio_value_hold
-                reward = hold_reward
-
-                if action == 1 and cash >= cur_price: # buy
-                        agent.inventory.append(cur_price)
-                        print("Buy: " + formatPrice(cur_price))
-                        prev_portfolio_value = portfolio_value_buy
-                        reward = buy_reward
-                        cash -= cur_price * trade_size
-                elif action == 2 and len(agent.inventory) > 0: # sell
-                        bought_price = agent.inventory.pop(0)
-                        cur_profit = (cur_price - bought_price) * trade_size
-                        total_profit += cur_profit
-                        print("Sell: " + formatPrice(cur_price) + " | Profit: "
-                              + formatPrice(cur_profit))
-                        prev_portfolio_value = portfolio_value_sale
-                        cash += cur_price * trade_size
-                        reward = sell_reward
-
-                done = True if t == l - 1 else False
-                agent.memory.append((state, 0, hold_reward, next_state, done))
-                agent.memory.append((state, 1, buy_reward, next_state, done))
-                agent.memory.append((state, 2, sell_reward, next_state, done))
-                state = next_state
-
-                if done:
-                        print("--------------------------------")
-                        print("Total Profit: " + formatPrice(total_profit))
-                        print("Agent params:")
-                        print("epsilon :", agent.epsilon)
-                        print("--------------------------------")
-
-                if len(agent.memory) > batch_size:
-                        agent.expReplay(batch_size)
-
-                agent.targetUpdate()
-
-        if e % 10 == 0:
-                agent.model.save("models/lstm/model_ep" + str(e))
