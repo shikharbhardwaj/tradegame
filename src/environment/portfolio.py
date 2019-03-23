@@ -39,8 +39,20 @@ class Portfolio:
 
         return price
 
-    def value(self, time):
-        """Portfolio value
+    def valueAtPrice(self, price):
+        """Portfolio value at given price.
+
+        Arguments:
+            price {float} -- Price of secondary currency.
+
+        Returns:
+            float -- portfolio value
+        """
+
+        return self.cash + self.secondary * price
+
+    def valueAtTime(self, time):
+        """Portfolio value at given time.
 
         Arguments:
             time {datetime} -- timestamp of the tick
@@ -49,10 +61,10 @@ class Portfolio:
             float -- portfolio value
         """
 
-        return self.cash + self.secondary * self.price(time)
+        return self.valueAtPrice(self.price(time))
 
-    def buy(self, time):
-        """Try to buy at given time
+    def buyAtTime(self, time):
+        """Try to buy at given time.
 
         Arguments:
             time {datetime} -- timestamp of the tick
@@ -71,7 +83,27 @@ class Portfolio:
 
         return True
 
-    def sell(self, time):
+    def buyAtPrice(self, price):
+        """Try to buy at given price.
+
+        Arguments:
+            price {float} -- price
+
+        Returns:
+            float -- Success or failure
+        """
+
+        cost = price * self.trade_size
+
+        if cost > self.cash:
+            return False
+
+        self.cash -= cost
+        self.secondary += self.trade_size
+
+        return True
+
+    def sellAtTime(self, time):
         """Try to sell at given time
 
         Arguments:
@@ -85,6 +117,26 @@ class Portfolio:
             return False
 
         cost = self.price(time) * self.trade_size
+
+        self.secondary -= self.trade_size
+        self.cash += cost
+
+        return True
+
+    def sellAtPrice(self, price):
+        """Try to sell at given price.
+
+        Arguments:
+            time {float} -- price
+
+        Returns:
+            bool -- Success or failure
+        """
+
+        if self.secondary < self.trade_size:
+            return False
+
+        cost = price * self.trade_size
 
         self.secondary -= self.trade_size
         self.cash += cost

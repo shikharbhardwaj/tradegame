@@ -42,13 +42,13 @@ class Environment:
         self.portfolio = portfolio
         self.tick_iterator = next(self.batch_iterator).iterrows()
         self.current_tick = next(self.tick_iterator)
-        self.market_state = self.current_tick[1].as_matrix()
+        self.market_state = self.current_tick[1].values
         self.last_action = 0
 
         # Advance the first few ticks to accumulate market history.
         for _ in range(history - 1):
             self.current_tick = next(self.tick_iterator)
-            self.market_state = np.concatenate((self.market_state, self.current_tick[1].as_matrix()))
+            self.market_state = np.concatenate((self.market_state, self.current_tick[1].values))
 
     def next(self, action):
         """Advance state by one tick.
@@ -68,7 +68,7 @@ class Environment:
         # A single tick has 2 * num_currency_pairs data points
         num_points = 2 * self.num_currency_pairs
         self.market_state = np.roll(self.market_state, num_points)
-        self.market_state[-1-num_points:-1] = self.current_tick[1].as_matrix()
+        self.market_state[-1-num_points:-1] = self.current_tick[1].values
 
     def execute(self, action):
         """Execute the specified action, generate reward and advance to the
@@ -80,17 +80,17 @@ class Environment:
         Returns:
             [float] -- Reward for the action.
         """
-        prev_portfolio_value = self.portfolio.value(self.current_tick[0])
+        prev_portfolio_value = self.portfolio.valueAtTime(self.current_tick[0])
 
         if action == 1:
-            self.portfolio.buy(self.current_tick[0])
+            self.portfolio.buyAtTime(self.current_tick[0])
         elif action == 2:
-            self.portfolio.sell(self.current_tick[0])
+            self.portfolio.sellAtTime(self.current_tick[0])
 
         # Advance to the next state.
         self.next(action)
 
-        cur_portfolio_value = self.portfolio.value(self.current_tick[0])
+        cur_portfolio_value = self.portfolio.valueAtTime(self.current_tick[0])
 
         # The reward is the logarithmic return on the portfolio value.
         reward = np.log(cur_portfolio_value / prev_portfolio_value)
@@ -107,26 +107,30 @@ class Environment:
             [(float, float, float)] -- A tuple of rewards for each action.
         """
         tick = self.current_tick[0]
-        prev_portfolio_value = self.portfolio.value(tick)
+
+        prev_price = self.portfolio.price(tick)
+        prev_portfolio_value = self.portfolio.valueAtTime(tick)
 
         # Move to the next state.
         self.next(action)
 
-        value_hold = self.portfolio.value(self.current_tick[0])
-        self.portfolio.buy(tick)
-        value_buy = self.portfolio.value(self.current_tick[0])
+        cur_price = self.portfolio.price(self.current_tick[0])
+        # BUG: We cannot move between states, need to cache certain values.
+        value_hold = self.portfolio.valueAtPrice(cur_price)
+        done = self.portfolio.buyAtPrice(prev_price)
+        value_buy = self.portfolio.valueAtPrice(cur_price)
         # Revert the buy action.
-        self.portfolio.sell(tick)
-        self.portfolio.sell(tick)
-        value_sell = self.portfolio.value(self.current_tick[0])
+        if done: self.portfolio.sellAtPrice(prev_price)
+        done = self.portfolio.sellAtPrice(prev_price)
+        value_sell = self.portfolio.valueAtPrice(cur_price)
         # Revert the sell action.
-        self.portfolio.buy(tick)
+        if done: self.portfolio.buyAtPrice(prev_price)
 
         # Execute the specified action
         if action == 1:
-            self.portfolio.buy(tick)
+            self.portfolio.buyAtPrice(prev_price)
         elif action == 2:
-            self.portfolio.sell(tick)
+            self.portfolio.sellAtPrice(prev_price)
 
         hold_reward = np.log(value_hold / prev_portfolio_value)
         buy_reward = np.log(value_buy / prev_portfolio_value)
@@ -153,7 +157,7 @@ class Environment:
         string_rep += "======================\n"
         string_rep += "Last action: " + str(self.last_action) + "\n"
         string_rep += "Current tick: " + str(self.current_tick[0]) + "\n"
-        string_rep += "Portfolio value: " + str(self.portfolio.value(self.current_tick[0])) + "\n"
+        string_rep += "Portfolio value: " + str(self.portfolio.valueAtTime(self.current_tick[0])) + "\n"
         string_rep += str(self.portfolio)
 
         return string_rep
@@ -161,16 +165,16 @@ class Environment:
 
 # Test usage
 if __name__ == '__main__':
-    import data
-    import portfolio
+    from data import BatchIterator
+    from portfolio import Portfolio
     pairs = ['AUDJPY', 'AUDNZD', 'AUDUSD', 'CADJPY', 'CHFJPY', 'EURCHF', 'EURGBP',
          'EURJPY', 'EURUSD', 'GBPJPY', 'GBPUSD', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY']
 
-    stateIter = data.BatchIterator('/data/tradegame_data/sampled_data_15T', pairs, 2012, 2015)
+    stateIter = BatchIterator('D:\\tradegame_data\\sampled_data_15T', pairs, 2012, 2015)
     tradePair = 'EURUSD'
-    priceIter = data.BatchIterator('/data/tradegame_data/sampled_data_15T', [tradePair], 2012, 2015, False)
+    priceIter = BatchIterator('D:\\tradegame_data\\sampled_data_15T', [tradePair], 2012, 2015, False)
 
-    portfolio = portfolio.Portfolio(100000, 10000, priceIter)
+    portfolio = Portfolio(100000, 10000, priceIter)
 
     env = Environment(pairs, stateIter, portfolio)
 
@@ -185,6 +189,13 @@ if __name__ == '__main__':
     print("Sell reward : ", env.execute(2))
     print("Hold reward : ", env.execute(0))
     print("Sell reward : ", env.execute(2))
+
+    print(str(env))
+
+    rewards = env.executeAugment(0)
+    print("Hold reward :", rewards[0])
+    print("Buy reward  :", rewards[1])
+    print("Sell reward :", rewards[2])
 
     print(str(env))
 
