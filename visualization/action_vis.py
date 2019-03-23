@@ -1,3 +1,9 @@
+"""Visualize trading actions
+"""
+
+import sys
+from os import path
+
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
 
@@ -7,12 +13,22 @@ import matplotlib.patches as mpatches
 import pandas as pd
 from datetime import datetime
 
+if len(sys.argv) != 5:
+    print("python action_vis.py [pair] [year] [month] [action file]")
+    exit(0)
 
-location = '/data/tradegame_data/sampled_data_15T/EURUSD-2013-01_15T.csv'
-actions = '../src/metrics/actions_1553092044.csv'
+pair = sys.argv[1]
+year = sys.argv[2]
+month = sys.argv[3]
+action_file = sys.argv[4]
 
-df = pd.read_csv(location)
-action_df = pd.read_csv(actions)
+data_file = f'{pair}-{year}-{month}_15T.csv'
+
+data_location = path.join('D:', 'tradegame_data', 'sampled_data_15T', data_file)
+actions_location = path.join('..', 'src', 'metrics', action_file)
+
+df = pd.read_csv(data_location)
+action_df = pd.read_csv(actions_location)
 
 df['tick'] = pd.to_datetime(df['tick'])
 action_df['tick'] = pd.to_datetime(action_df['tick'])
@@ -45,7 +61,7 @@ plt.scatter(hold_points, df.loc[hold_points]['close'], c='dodgerblue', marker='.
 
 plt.ylabel('Closing price')
 plt.xlabel('Time')
-plt.title('EURUSD-JAN-2013')
+plt.title(data_file[0:data_file.find('_15T')])
 
 
 green_patch = mpatches.Patch(color='green', label='Buy')
