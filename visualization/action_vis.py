@@ -1,4 +1,4 @@
-"""Visualize trading actions
+"""Visualize trading actions with price movement.
 """
 
 import sys
@@ -55,19 +55,27 @@ for tick in df.index:
 
 plt.style.use('seaborn-whitegrid')
 
-plt.scatter(buy_points, df.loc[buy_points]['close'], c='green', marker='.', s=6, label='Buy')
-plt.scatter(sell_points, df.loc[sell_points]['close'], c='salmon', marker='.', s=6, label='Sell')
-plt.scatter(hold_points, df.loc[hold_points]['close'], c='dodgerblue', marker='.', s=6, label='Hold')
+fig, axarr = plt.subplots(2, sharex=True)
 
-plt.ylabel('Closing price')
-plt.xlabel('Time')
-plt.title(data_file[0:data_file.find('_15T')])
+price_plot = axarr[0]
+price_plot.plot(df.index.values, df['close'])
+price_plot.set_title(data_file[0:data_file.find('_15T')])
 
+action_plot = axarr[1]
+action_plot.scatter(buy_points, df.loc[buy_points]['close'], c='green', marker='.', s=6, label='Buy')
+action_plot.scatter(sell_points, df.loc[sell_points]['close'], c='salmon', marker='.', s=6, label='Sell')
+action_plot.scatter(hold_points, df.loc[hold_points]['close'], c='dodgerblue', marker='.', s=6, label='Hold')
+
+action_plot.set_title("Agent actions")
 
 green_patch = mpatches.Patch(color='green', label='Buy')
 salmon_patch = mpatches.Patch(color='salmon', label='Sell')
 blue_patch = mpatches.Patch(color='dodgerblue', label='Hold')
 
-plt.legend(handles=[green_patch, salmon_patch, blue_patch])
+action_plot.legend(handles=[green_patch, salmon_patch, blue_patch])
+
+plt.xlabel('Time')
+
+fig.text(0.06, 0.5, 'Closing price', ha='center', va='center', rotation='vertical', fontsize=12)
 
 plt.show()
