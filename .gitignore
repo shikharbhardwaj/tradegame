@@ -131,3 +131,7 @@ Session.vim
 tags
 # Persistent undo
 [._]*.un~
+
+# Recorded metrics and models
+src/metrics
+src/models
