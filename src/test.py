@@ -27,7 +27,7 @@ start_cash = config['start_cash']
 trade_size = config['trade_size']
 
 # Output metrics
-action_series_location = "metrics/actions_" + str(int(time.time())) + ".csv"
+metrics_series_location = "metrics/metrics_" + str(int(time.time())) + ".csv"
 
 # Data iterators
 state_iter = BatchIterator(location, pairs, begin_year, end_year)
@@ -43,7 +43,7 @@ agent = Agent(state_shape[0], is_eval = True, model_location = model_location)
 
 num_steps = 1
 
-actions = pd.DataFrame(columns=['tick', 'action'])
+metrics = pd.DataFrame(columns=['tick', 'action', 'value'])
 
 while True:
     tick = env.current_tick[0]
@@ -52,7 +52,8 @@ while True:
 
     try:
         reward = env.execute(action)
-        actions = actions.append({'tick': tick, 'action': action}, ignore_index=True)
+        value = env.portfolio.valueAtTime(env.current_tick[0])
+        metrics = metrics.append({'tick': tick, 'action': action, 'value': value}, ignore_index=True)
     except StopIteration:
         print("Training ended after processing", num_steps - 1, "ticks")
         print(str(env))
@@ -71,4 +72,4 @@ while True:
 
     num_steps += 1
 
-actions.to_csv(action_series_location)
+metrics.to_csv(metrics_series_location)
