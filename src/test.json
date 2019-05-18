@@ -1,12 +1,12 @@
 {
-    "data_location": "/data/tradegame_data/sampled_data_15T",
-    "model_location": "/home/shikhar/dev/tradegame_new/src/models/flat_state_exp/eval_model.h5",
+    "data_location": "D:\\tradegame_data\\sampled_data_15T",
+    "model_location": "E:\\dev\\tradegame\\src\\models\\flat_state_exp\\eval_model2.h5",
     "pairs": ["AUDJPY", "AUDNZD", "AUDUSD", "CADJPY", "CHFJPY", "EURCHF",
         "EURGBP", "EURJPY", "EURUSD", "GBPJPY", "GBPUSD", "NZDUSD", "USDCAD",
         "USDCHF", "USDJPY"],
     "trade_pair": "EURUSD",
-    "begin_year": 2013,
-    "end_year": 2014,
-    "start_cash": 10000,
-    "trade_size": 1000
+    "begin_year": 2017,
+    "end_year": 2018,
+    "start_cash": 200000,
+    "trade_size": 100000
 }

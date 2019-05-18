@@ -4,6 +4,7 @@
 import json
 import sys
 import numpy as np
+from time import time
 
 from environment.data import BatchIterator
 from environment.portfolio import Portfolio
@@ -43,31 +44,36 @@ agent = Agent(state_shape[0])
 # Go through the ticks and learn
 num_steps = 1
 
+t0 = time()
 while True:
     cur_state = env.state()
     action = agent.act(cur_state)
 
     # Get rewards for all possible actions.
     try:
-        rewards = env.executeAugment(action)
+        # rewards = env.executeAugment(action)
+        reward = env.execute(action)
     except StopIteration:
         print("Training ended after processing", num_steps, "ticks")
+        t1 = time()
+        print("Time taken:", t1 - t0, "s")
         break
 
     # Get the next state.
     next_state = env.state()
 
     # Append the possible actions to replay memory
-    next_state[4:7] = np.zeros(3)
-    hold_state = np.copy(next_state)
-    hold_state[4] = 1
-    agent.memory.append((cur_state, 0, rewards[0], hold_state))
-    buy_state = np.copy(next_state)
-    buy_state[5] = 1
-    agent.memory.append((cur_state, 1, rewards[1], buy_state))
-    sell_state = np.copy(next_state)
-    sell_state[6] = 1
-    agent.memory.append((cur_state, 2, rewards[2], sell_state))
+    # next_state[4:7] = np.zeros(3)
+    # hold_state = np.copy(next_state)
+    # hold_state[4] = 1
+    # agent.memory.append((cur_state, 0, rewards[0], hold_state))
+    # buy_state = np.copy(next_state)
+    # buy_state[5] = 1
+    # agent.memory.append((cur_state, 1, rewards[1], buy_state))
+    # sell_state = np.copy(next_state)
+    # sell_state[6] = 1
+    # agent.memory.append((cur_state, 2, rewards[2], sell_state))
+    agent.memory.append((cur_state, action, reward, next_state))
 
     if num_steps % 96 == 0 and len(agent.memory) == 480:
         agent.expReplay()
@@ -78,9 +84,9 @@ while True:
         print("Training checkpoint (", num_steps, ") ", sep="", end="")
         try:
             agent.model.save("models/flat_state_exp/model_" + str(num_steps))
-            print("✓")
+            print(".")
         except NotImplementedError:
-            print("❌")
+            print("x")
         print(str(env))
         print(str(agent))
         print()

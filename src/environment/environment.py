@@ -165,8 +165,8 @@ class Environment:
 
 # Test usage
 if __name__ == '__main__':
-    from data import BatchIterator
-    from portfolio import Portfolio
+    from .data import BatchIterator
+    from .portfolio import Portfolio
     pairs = ['AUDJPY', 'AUDNZD', 'AUDUSD', 'CADJPY', 'CHFJPY', 'EURCHF', 'EURGBP',
          'EURJPY', 'EURUSD', 'GBPJPY', 'GBPUSD', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY']
 
