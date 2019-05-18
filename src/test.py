@@ -3,7 +3,8 @@
 
 import json
 import sys
-import time
+from os import path, makedirs
+from time import time
 
 import pandas as pd
 
@@ -12,7 +13,7 @@ from environment.portfolio import Portfolio
 from environment.environment import Environment
 from agent.agent import Agent
 
-config_file = sys.argv[1] if len(sys.argv) == 2 else "/home/shikhar/dev/tradegame_new/src/test.json"
+config_file = sys.argv[1] if len(sys.argv) == 2 else "./test.json"
 
 config = json.load(open(config_file))
 
@@ -26,8 +27,9 @@ trade_pair = config['trade_pair']
 start_cash = config['start_cash']
 trade_size = config['trade_size']
 
-# Output metrics
-metrics_series_location = "metrics/metrics_" + str(int(time.time())) + ".csv"
+# Create output metrics directory
+metrics_location = path.join(path.dirname(__file__), '..', 'metrics',
+                             str(int(time())) + ".csv")
 
 # Data iterators
 state_iter = BatchIterator(location, pairs, begin_year, end_year)

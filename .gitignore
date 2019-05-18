@@ -133,5 +133,5 @@ tags
 [._]*.un~
 
 # Recorded metrics and models
-src/metrics
-src/models
+metrics
+models

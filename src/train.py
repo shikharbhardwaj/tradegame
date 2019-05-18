@@ -2,8 +2,10 @@
 """
 
 import json
-import sys
 import numpy as np
+from os import path, makedirs
+import platform
+import sys
 from time import time
 
 from environment.data import BatchIterator
@@ -15,7 +17,7 @@ from agent.agent import Agent
 #     print("Usage: python train.py [config]")
 #     exit(0)
 
-config_file = sys.argv[1] if len(sys.argv) == 2 else "/home/shikhar/dev/tradegame_new/src/sample.json"
+config_file = sys.argv[1] if len(sys.argv) == 2 else "./sample.json"
 
 config = json.load(open(config_file))
 
@@ -27,6 +29,13 @@ end_year = config['end_year']
 trade_pair = config['trade_pair']
 start_cash = config['start_cash']
 trade_size = config['trade_size']
+
+# Create output model directory
+model_dir = path.join(path.dirname(__file__), '..', 'models',
+                      'train_'+str(int(time())))
+
+if not path.exists(model_dir):
+    makedirs(model_dir)
 
 # Data iterators
 state_iter = BatchIterator(location, pairs, begin_year, end_year)
@@ -54,9 +63,6 @@ while True:
         # rewards = env.executeAugment(action)
         reward = env.execute(action)
     except StopIteration:
-        print("Training ended after processing", num_steps, "ticks")
-        t1 = time()
-        print("Time taken:", t1 - t0, "s")
         break
 
     # Get the next state.
@@ -83,7 +89,7 @@ while True:
     if num_steps % 1000 == 0:
         print("Training checkpoint (", num_steps, ") ", sep="", end="")
         try:
-            agent.model.save("models/flat_state_exp/model_" + str(num_steps))
+            agent.model.save(path.join(model_dir, "model_" + str(num_steps)))
             print(".")
         except NotImplementedError:
             print("x")
@@ -93,4 +99,15 @@ while True:
 
     num_steps += 1
 
+# Save training configuration
+print("Training ended after processing", num_steps, "ticks")
+time_taken = int(time() - t0)
+
+print("Time taken:", time_taken, "s")
+
+config['_time_taken'] = time_taken
+config['_ticks_processed'] = num_steps
+
+with open(path.join(model_dir, 'train_config.json'), 'w') as f:
+    f.write(json.dumps(config, indent=4))
 
