@@ -57,7 +57,7 @@ while True:
         value = env.portfolio.valueAtTime(env.current_tick[0])
         metrics = metrics.append({'tick': tick, 'action': action, 'value': value}, ignore_index=True)
     except StopIteration:
-        print("Training ended after processing", num_steps - 1, "ticks")
+        print("Evaluation ended after processing", num_steps - 1, "ticks")
         print(str(env))
         print(str(agent))
         print()
@@ -74,4 +74,4 @@ while True:
 
     num_steps += 1
 
-metrics.to_csv(metrics_series_location)
+metrics.to_csv(metrics_location)

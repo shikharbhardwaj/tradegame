@@ -1,6 +1,7 @@
 import datetime
 from os import path
 import sys
+import platform
 
 import pandas as pd
 import dash
@@ -21,7 +22,14 @@ metric_location = sys.argv[4]
 
 data_file = f'{pair}_{year}.csv'
 
-data_location = path.join('D:', 'tradegame_data', 'sampled_data_15T', data_file[0:data_file.find('.')], data_file)
+plat = platform.system()
+
+base = 'D:'
+if plat != 'Windows':
+    base = '/data'
+
+print(data_file)
+data_location = path.join(base, 'tradegame_data', 'sampled_data_15T', 'yearly', data_file)
 
 df = pd.read_csv(data_location)
 value_df = pd.read_csv(metric_location)
