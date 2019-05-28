@@ -24,8 +24,8 @@ action_file = sys.argv[4]
 
 data_file = f'{pair}-{year}-{month}_15T.csv'
 
-data_location = path.join('D:', 'tradegame_data', 'sampled_data_15T', data_file)
-actions_location = path.join('..', 'src', 'metrics', action_file)
+data_location = path.join('~/data', 'tradegame_data', 'sampled_data_15T', data_file)
+actions_location = path.join(action_file)
 
 df = pd.read_csv(data_location)
 action_df = pd.read_csv(actions_location)
