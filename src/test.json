@@ -1,6 +1,6 @@
 {
-    "data_location": "~/sampled_data",
-    "model_location": "~/tradegame/src/models/flat_state_exp/eval_model2.h5",
+    "data_location": "/data/tradegame_data/sampled_data_15T",
+    "model_location": "/home/shikhar/dev/tradegame_new/models/final_models/DRQN/eval_model.h5",
     "pairs": ["AUDJPY", "AUDNZD", "AUDUSD", "CADJPY", "CHFJPY", "EURCHF",
         "EURGBP", "EURJPY", "EURUSD", "GBPJPY", "GBPUSD", "NZDUSD", "USDCAD",
         "USDCHF", "USDJPY"],

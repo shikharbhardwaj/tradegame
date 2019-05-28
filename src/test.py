@@ -13,7 +13,7 @@ from environment.portfolio import Portfolio
 from environment.environment import Environment
 from agent.agent import Agent
 
-config_file = sys.argv[1] if len(sys.argv) == 2 else "./test.json"
+config_file = sys.argv[1] if len(sys.argv) == 2 else "/home/shikhar/dev/tradegame_new/src/test.json"
 
 config = json.load(open(config_file))
 

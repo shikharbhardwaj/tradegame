@@ -49,7 +49,7 @@ class Portfolio:
         if cost <= self.cash:
             actions.append(1)
 
-        if self.secondary < self.trade_size:
+        if self.secondary >= self.trade_size:
             actions.append(2)
 
         return actions

@@ -46,7 +46,7 @@ class Agent:
 
         return model
 
-    def act(self, state, valid_actions=[0, 1, 2]):
+    def act(self, state, valid_actions):
         if np.random.rand() <= self.epsilon:
             action = np.random.randint(self.action_size)
         else:
