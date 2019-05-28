@@ -49,6 +49,7 @@ state_shape = env.state().shape
 
 # Initialize the agent
 agent = Agent(state_shape[0])
+print(state_shape)
 
 # Go through the ticks and learn
 num_steps = 1
@@ -56,7 +57,7 @@ num_steps = 1
 t0 = time()
 while True:
     cur_state = env.state()
-    action = agent.act(cur_state)
+    action = agent.act(cur_state, env.valid_actions())
 
     # Get rewards for all possible actions.
     try:

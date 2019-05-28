@@ -5,18 +5,20 @@ buy, sell and update the portfolio with time.
 """
 
 class Portfolio:
-    def __init__(self, startCash, tradeSize, batchIterator):
+    def __init__(self, startCash, tradeSize, batchIterator, spread=0.0):
         """Initialize the portfolio
 
         Arguments:
             startCash {float} -- Starting cash for the trader
             tradeSize {float} -- Size of a single trade step
             batchIterator {BatchIterator} -- Price data iterator
+            spread {float} -- Fixed spread for fees calculation
         """
 
         self.cash = startCash
         self.trade_size = tradeSize
         self.batch_iterator = batchIterator
+        self.spread = spread
         self.secondary = 0.0
         self.price_data = next(self.batch_iterator)
 
@@ -38,6 +40,19 @@ class Portfolio:
             price = self.price_data.loc[time]['close']
 
         return price
+
+    def valid_actions(self, time):
+        actions = [0]
+
+        cost = self.price(time) * self.trade_size
+
+        if cost <= self.cash:
+            actions.append(1)
+
+        if self.secondary < self.trade_size:
+            actions.append(2)
+
+        return actions
 
     def valueAtPrice(self, price):
         """Portfolio value at given price.

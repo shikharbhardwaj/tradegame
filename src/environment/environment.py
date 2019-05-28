@@ -50,6 +50,9 @@ class Environment:
             self.current_tick = next(self.tick_iterator)
             self.market_state = np.concatenate((self.market_state, self.current_tick[1].values))
 
+    def valid_actions(self):
+        return self.portfolio.valid_actions(self.current_tick[0])
+
     def next(self, action):
         """Advance state by one tick.
         """
