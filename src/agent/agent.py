@@ -45,14 +45,20 @@ class Agent:
 
         return model
 
-    def act(self, state):
-        if not self.is_eval and np.random.rand() <= self.epsilon:
-            return np.random.randint(self.action_size)
+    def act(self, state, valid_actions=[0, 1, 2]):
+        if np.random.rand() <= self.epsilon:
+            action = np.random.randint(self.action_size)
+        else:
+            state = np.expand_dims(state, axis=0)
+            state = np.expand_dims(state, axis=0)
+            options = self.model.predict(state)[0]
+            action = np.argmax(options)
 
-        state = np.expand_dims(state, axis=0)
-        state = np.expand_dims(state, axis=0)
-        options = self.model.predict(state)[0]
-        return np.argmax(options)
+        # Deal with invalid actions.
+        if action not in valid_actions:
+            return 0
+
+        return action
 
     def sampleMemory(self):
         idx = np.random.permutation(len(self.memory))[:self.sample_size]
