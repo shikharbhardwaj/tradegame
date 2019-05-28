@@ -74,7 +74,7 @@ class Agent:
         action = np.argmax(self.actor_model.predict(state)[0])
 
         history = self.actor_model.fit(state, np.expand_dims(q_values, axis=0), verbose=0)
-        self.plot.plot(history.history['loss'])
+        # self.plot.plot(history.history['loss'])
         return action
 
     def sampleMemory(self):

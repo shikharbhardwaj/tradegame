@@ -113,7 +113,7 @@ print("Time taken:", time_taken, "s")
 config['_time_taken'] = time_taken
 config['_ticks_processed'] = num_steps
 
-plot.show()
+ax.show()
 
 with open(path.join(model_dir, 'train_config.json'), 'w') as f:
     f.write(json.dumps(config, indent=4))

@@ -43,6 +43,9 @@ env = Environment(pairs, state_iter, portfolio)
 state_shape = env.state().shape
 
 
+# Visualizing the learning
+# _, ax = plt.subplots()
+
 agent = Agent(state_shape[0], is_eval = True, actor_model_location = actor_model_location, critic_model_location = critic_model_location)
 
 num_steps = 1
@@ -76,4 +79,4 @@ while True:
 
     num_steps += 1
 
-metrics.to_csv(metrics_series_location)
+metrics.to_csv(metrics_location)
