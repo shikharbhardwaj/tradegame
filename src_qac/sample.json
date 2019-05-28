@@ -1,0 +1,11 @@
+{
+    "data_location": "~/sampled_data",
+    "pairs": ["AUDJPY", "AUDNZD", "AUDUSD", "CADJPY", "CHFJPY", "EURCHF",
+        "EURGBP", "EURJPY", "EURUSD", "GBPJPY", "GBPUSD", "NZDUSD", "USDCAD",
+        "USDCHF", "USDJPY"],
+    "trade_pair": "EURUSD",
+    "begin_year": 2012,
+    "end_year": 2017,
+    "start_cash": 200000,
+    "trade_size": 100000
+}
