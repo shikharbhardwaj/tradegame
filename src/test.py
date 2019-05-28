@@ -28,8 +28,8 @@ start_cash = config['start_cash']
 trade_size = config['trade_size']
 
 # Create output metrics directory
-metrics_location = path.join(path.dirname(__file__), '..', 'metrics',
-                             str(int(time())) + ".csv")
+stamp = str(int(time())) 
+metrics_location = path.join(path.dirname(__file__), '..', 'metrics')
 
 # Data iterators
 state_iter = BatchIterator(location, pairs, begin_year, end_year)
@@ -50,7 +50,7 @@ metrics = pd.DataFrame(columns=['tick', 'action', 'value'])
 while True:
     tick = env.current_tick[0]
     cur_state = env.state()
-    action = agent.act(cur_state)
+    action = agent.act(cur_state, env.valid_actions())
 
     try:
         reward = env.execute(action)
@@ -74,4 +74,7 @@ while True:
 
     num_steps += 1
 
-metrics.to_csv(metrics_location)
+metrics.to_csv(path.join(metrics_location, stamp + '.csv'))
+
+with open(path.join(metrics_location, stamp + ".json"), 'w') as f:
+    f.write(json.dumps(config, indent=4))
