@@ -1,13 +1,13 @@
 {
-    "data_location": "~/sampled_data",
-    "actor_model_location": "/home/aditya/tradegame/models/actor_model",
-    "critic_model_location": "/home/aditya/tradegame/models/critic_model",
+    "data_location": "/data/tradegame_data/sampled_data_15T",
+    "actor_model_location": "/home/shikhar/dev/tradegame_new/models/QAC_Aditya/actor_model",
+    "critic_model_location": "/home/shikhar/dev/tradegame_new/models/QAC_Aditya/critic_model",
     "pairs": ["AUDJPY", "AUDNZD", "AUDUSD", "CADJPY", "CHFJPY", "EURCHF",
         "EURGBP", "EURJPY", "EURUSD", "GBPJPY", "GBPUSD", "NZDUSD", "USDCAD",
         "USDCHF", "USDJPY"],
-    "trade_pair": "EURUSD",
-    "begin_year": 2017,
-    "end_year": 2018,
+    "trade_pair": "EURGBP",
+    "begin_year": 2012,
+    "end_year": 2013,
     "start_cash": 200000,
     "trade_size": 100000
 }

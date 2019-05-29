@@ -1,5 +1,5 @@
 {
-    "data_location": "~/sampled_data",
+    "data_location": "/data/tradegame_data/sampled_data_15T",
     "pairs": ["AUDJPY", "AUDNZD", "AUDUSD", "CADJPY", "CHFJPY", "EURCHF",
         "EURGBP", "EURJPY", "EURUSD", "GBPJPY", "GBPUSD", "NZDUSD", "USDCAD",
         "USDCHF", "USDJPY"],

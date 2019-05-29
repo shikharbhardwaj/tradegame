@@ -39,6 +39,19 @@ class Portfolio:
 
         return price
 
+    def valid_actions(self, time):
+        actions = [0]
+
+        cost = self.price(time) * self.trade_size
+
+        if cost <= self.cash:
+            actions.append(1)
+
+        if self.secondary >= self.trade_size:
+            actions.append(2)
+
+        return actions
+
     def valueAtPrice(self, price):
         """Portfolio value at given price.
 

@@ -60,7 +60,7 @@ num_steps = 1
 t0 = time()
 while True:
     cur_state = env.state()
-    action = agent.act(cur_state)
+    action = agent.act(cur_state, env.valid_actions())
 
     # Get rewards for all possible actions.
     try:

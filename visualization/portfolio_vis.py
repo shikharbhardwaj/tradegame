@@ -25,7 +25,7 @@ metric_location = sys.argv[4]
 
 data_file = f'{pair}-{year}-{month}_15T.csv'
 
-data_location = path.join('D:', 'tradegame_data', 'sampled_data_15T', data_file)
+data_location = path.join('/data', 'tradegame_data', 'sampled_data_15T', data_file)
 
 df = pd.read_csv(data_location)
 value_df = pd.read_csv(metric_location)

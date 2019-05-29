@@ -13,7 +13,7 @@ from environment.portfolio import Portfolio
 from environment.environment import Environment
 from agent.agent import Agent
 
-config_file = sys.argv[1] if len(sys.argv) == 2 else "./test.json"
+config_file = sys.argv[1] if len(sys.argv) == 2 else path.join(path.dirname(__file__), "test.json")
 
 config = json.load(open(config_file))
 
@@ -29,8 +29,9 @@ start_cash = config['start_cash']
 trade_size = config['trade_size']
 
 # Create output metrics directory
+stamp = str(int(time()))
 metrics_location = path.join(path.dirname(__file__), '..', 'metrics',
-                             str(int(time())) + ".csv")
+                             'final_results', 'QAC', 'bwd')
 
 # Data iterators
 state_iter = BatchIterator(location, pairs, begin_year, end_year)
@@ -55,6 +56,7 @@ metrics = pd.DataFrame(columns=['tick', 'action', 'value'])
 while True:
     tick = env.current_tick[0]
     cur_state = env.state()
+    # action = agent.act(cur_state, env.valid_actions())
     action = agent.act(cur_state)
 
     try:
@@ -79,4 +81,7 @@ while True:
 
     num_steps += 1
 
-metrics.to_csv(metrics_location)
+metrics.to_csv(path.join(metrics_location, stamp + '.csv'))
+
+with open(path.join(metrics_location, stamp + ".json"), 'w') as f:
+    f.write(json.dumps(config, indent=4))
